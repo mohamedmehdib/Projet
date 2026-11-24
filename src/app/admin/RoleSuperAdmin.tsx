@@ -201,14 +201,18 @@ export default function RoleSuperAdmin({
               <form onSubmit={handleAddInscription} className="space-y-3">
                 <div>
                   <label className="block text-xs font-semibold text-secondary/70 mb-1">Année Universitaire</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="ex: 2026 - 2027"
+                  <select
                     value={annee}
                     onChange={(e) => setAnnee(e.target.value)}
                     className="w-full h-9 px-3 rounded-xl border border-secondary/20 bg-secondary/5 text-xs text-secondary font-medium focus:outline-hidden focus:border-accent"
-                  />
+                  >
+                    <option value="2024 - 2025">2024 - 2025</option>
+                    <option value="2025 - 2026">2025 - 2026</option>
+                    <option value="2026 - 2027">2026 - 2027</option>
+                    <option value="2027 - 2028">2027 - 2028</option>
+                    <option value="2028 - 2029">2028 - 2029</option>
+                    <option value="2029 - 2030">2029 - 2030</option>
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-secondary/70 mb-1">Date Début</label>
