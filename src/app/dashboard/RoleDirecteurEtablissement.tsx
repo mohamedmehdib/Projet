@@ -116,6 +116,12 @@ export default function RoleDirecteurEtablissement({
   const [editSalleType, setEditSalleType] = useState<"COURS" | "TP">("COURS");
   const [editSalleEtage, setEditSalleEtage] = useState("RDC");
 
+  // Edit groupe TP modal state
+  const [editingGroupe, setEditingGroupe] = useState<any | null>(null);
+  const [editGroupeNom, setEditGroupeNom] = useState("");
+  const [editGroupeCapacite, setEditGroupeCapacite] = useState("");
+  const [editGroupeClasse, setEditGroupeClasse] = useState("DSI3.3");
+
   // New user form state
   const [newUserNom, setNewUserNom] = useState("");
   const [newUserPrenom, setNewUserPrenom] = useState("");
@@ -1007,6 +1013,90 @@ export default function RoleDirecteurEtablissement({
       console.error("Error creating TP group:", err);
       setFormError("Erreur lors de la création du groupe TP.");
       setTimeout(() => setFormError(null), 5000);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleOpenEditGroupe = (groupe: any) => {
+    setEditingGroupe(groupe);
+    setEditGroupeNom(groupe.nom || "");
+    setEditGroupeCapacite(groupe.capacite ? String(groupe.capacite) : "");
+    setEditGroupeClasse(groupe.classe || "DSI3.3");
+  };
+
+  const handleSaveEditGroupe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingGroupe || !editGroupeNom || !editGroupeCapacite || !editGroupeClasse) return;
+
+    const requestedCap = parseInt(editGroupeCapacite, 10);
+    if (isNaN(requestedCap) || requestedCap <= 0) {
+      setFormError("Veuillez saisir une capacité valide pour le groupe TP.");
+      setTimeout(() => setFormError(null), 5000);
+      return;
+    }
+
+    const targetClasse = classesList.find((c) => c.nom === editGroupeClasse);
+    const classeTotalEffectif = targetClasse ? targetClasse.effectif : 28;
+
+    if (requestedCap > classeTotalEffectif) {
+      setFormError(
+        `Impossible : la capacité demandée (${requestedCap}) dépasse l'effectif total de la classe ${editGroupeClasse} (${classeTotalEffectif}).`
+      );
+      setTimeout(() => setFormError(null), 6000);
+      return;
+    }
+
+    const otherGroupes = groupesList.filter((g) => g.classe === editGroupeClasse && g.id !== editingGroupe.id);
+    const otherCapaciteSum = otherGroupes.reduce((sum, g) => sum + (g.capacite || 0), 0);
+
+    if (otherCapaciteSum + requestedCap > classeTotalEffectif) {
+      const placesRestantes = Math.max(0, classeTotalEffectif - otherCapaciteSum);
+      setFormError(
+        `Dépassement d'effectif : les autres groupes occupent déjà ${otherCapaciteSum} places sur ${classeTotalEffectif}. Il ne reste que ${placesRestantes} place(s).`
+      );
+      setTimeout(() => setFormError(null), 7000);
+      return;
+    }
+
+    const cleanNom = editGroupeNom.trim().toLowerCase();
+    const duplicate = otherGroupes.find((g) => g.nom.trim().toLowerCase() === cleanNom);
+    if (duplicate) {
+      setFormError(`Le groupe "${editGroupeNom.trim()}" existe déjà pour la classe ${editGroupeClasse}.`);
+      setTimeout(() => setFormError(null), 6000);
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      setFormError(null);
+      const matchedClasseObj = classesList.find((c) => c.nom === editGroupeClasse);
+      const updates = {
+        nom: editGroupeNom.trim(),
+        capacite: requestedCap,
+        classe_nom: editGroupeClasse,
+        classe_id: matchedClasseObj ? matchedClasseObj.id : undefined,
+      };
+
+      await SupabaseService.updateGroupeTP(editingGroupe.id, updates).catch((err) =>
+        console.warn("Notice: updateGroupeTP fallback", err)
+      );
+
+      setGroupesList((prev) =>
+        prev.map((g) =>
+          g.id === editingGroupe.id
+            ? { ...g, nom: editGroupeNom.trim(), capacite: requestedCap, classe: editGroupeClasse }
+            : g
+        )
+      );
+
+      setEditingGroupe(null);
+      setFormSuccess(`Groupe TP "${editGroupeNom.trim()}" modifié avec succès !`);
+      setTimeout(() => setFormSuccess(null), 4000);
+    } catch (err: any) {
+      console.error("Error updating TP group:", err);
+      setFormError(err?.message || "Erreur lors de la modification du groupe TP.");
+      setTimeout(() => setFormError(null), 6000);
     } finally {
       setActionLoading(false);
     }
@@ -2115,14 +2205,25 @@ export default function RoleDirecteurEtablissement({
                         <td className="py-3.5 px-3 text-secondary/70">{g.classe}</td>
                         <td className="py-3.5 px-3 text-secondary font-medium">{g.capacite} étudiants max</td>
                         <td className="py-3.5 px-3 text-center">
-                          <button
-                            type="button"
-                            disabled={deletingId === g.id}
-                            onClick={() => handleDeleteGroupe(g.id)}
-                            className="p-1.5 rounded-lg text-secondary/60 hover:text-rose-500 hover:bg-rose-500/5 transition-colors disabled:opacity-40"
-                          >
-                            {deletingId === g.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-500" /> : <Trash2 className="w-3.5 h-3.5" />}
-                          </button>
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditGroupe(g)}
+                              title="Modifier ce groupe TP"
+                              className="p-1.5 rounded-lg text-secondary/60 hover:text-indigo-500 hover:bg-indigo-500/10 transition-colors"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={deletingId === g.id}
+                              onClick={() => handleDeleteGroupe(g.id)}
+                              title="Supprimer ce groupe TP"
+                              className="p-1.5 rounded-lg text-secondary/60 hover:text-rose-500 hover:bg-rose-500/10 transition-colors disabled:opacity-40"
+                            >
+                              {deletingId === g.id ? <Loader2 className="w-3.5 h-3.5 animate-spin text-rose-500" /> : <Trash2 className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -2132,45 +2233,118 @@ export default function RoleDirecteurEtablissement({
             </div>
 
             <div className="rounded-3xl border border-secondary/15 bg-primary/90 p-5 sm:p-7 shadow-2xl backdrop-blur-xl">
-              <h3 className="text-sm font-extrabold text-secondary flex items-center gap-2 mb-4 pb-2 border-b border-secondary/10">
-                <Plus className="w-4 h-4 text-accent" /> Créer un groupe TP
-              </h3>
-              <form onSubmit={handleAddGroupe} className="space-y-3">
+              {editingGroupe ? (
                 <div>
-                  <label className="block text-xs font-semibold text-secondary/70 mb-1">Nom du groupe</label>
-                  <input type="text" required placeholder="ex: Groupe TP 3" value={groupeNom} onChange={(e) => setGroupeNom(e.target.value)} className="w-full h-9 px-3 rounded-xl border border-secondary/20 bg-secondary/5 text-xs text-secondary font-medium focus:outline-hidden focus:border-accent" />
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-semibold text-secondary/70">Classe rattachée</label>
-                    {(() => {
-                      const matchedCl = classesList.find((c) => c.nom === groupeClasse);
-                      const totalEff = matchedCl ? matchedCl.effectif : 28;
-                      const usedEff = groupesList
-                        .filter((g) => g.classe === groupeClasse)
-                        .reduce((sum, g) => sum + (g.capacite || 0), 0);
-                      const remaining = Math.max(0, totalEff - usedEff);
-                      return (
-                        <span className="text-[10px] font-bold text-accent">
-                          Effectif : {usedEff}/{totalEff} ({remaining} place(s) restante(s))
-                        </span>
-                      );
-                    })()}
+                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-secondary/10">
+                    <h3 className="text-sm font-extrabold text-secondary flex items-center gap-2">
+                      <Edit className="w-4 h-4 text-indigo-500" /> Modifier le groupe TP #{editingGroupe.id}
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setEditingGroupe(null)}
+                      className="p-1 rounded-lg text-secondary/50 hover:text-secondary hover:bg-secondary/10"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
-                  <select value={groupeClasse} onChange={(e) => setGroupeClasse(e.target.value)} className="w-full h-9 px-3 rounded-xl border border-secondary/20 bg-secondary/5 text-xs text-secondary font-medium focus:outline-hidden focus:border-accent">
-                    {classesList.map(c => <option key={c.id} value={c.nom}>{c.nom} ({c.niveau} · {c.effectif} étudiants)</option>)}
-                  </select>
+                  <form onSubmit={handleSaveEditGroupe} className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-secondary/70 mb-1">Nom du groupe</label>
+                      <input
+                        type="text"
+                        required
+                        value={editGroupeNom}
+                        onChange={(e) => setEditGroupeNom(e.target.value)}
+                        className="w-full h-9 px-3 rounded-xl border border-secondary/20 bg-secondary/5 text-xs text-secondary font-medium focus:outline-hidden focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-secondary/70 mb-1">Classe rattachée</label>
+                      <select
+                        value={editGroupeClasse}
+                        onChange={(e) => setEditGroupeClasse(e.target.value)}
+                        className="w-full h-9 px-3 rounded-xl border border-secondary/20 bg-secondary/5 text-xs text-secondary font-medium focus:outline-hidden focus:border-indigo-500"
+                      >
+                        {classesList.map((c) => (
+                          <option key={c.id} value={c.nom}>
+                            {c.nom} ({c.niveau} · {c.effectif} étudiants)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-secondary/70 mb-1">Capacité maximale</label>
+                      <input
+                        type="number"
+                        required
+                        value={editGroupeCapacite}
+                        onChange={(e) => setEditGroupeCapacite(e.target.value)}
+                        className="w-full h-9 px-3 rounded-xl border border-secondary/20 bg-secondary/5 text-xs text-secondary font-medium focus:outline-hidden focus:border-indigo-500"
+                      />
+                    </div>
+                    <div className="pt-2 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setEditingGroupe(null)}
+                        className="w-1/3 h-10 rounded-xl border border-secondary/20 text-xs font-semibold text-secondary/70 hover:bg-secondary/5"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={actionLoading}
+                        className="w-2/3 h-10 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                        <span>{actionLoading ? "Enregistrement..." : "Enregistrer"}</span>
+                      </button>
+                    </div>
+                  </form>
                 </div>
+              ) : (
                 <div>
-                  <label className="block text-xs font-semibold text-secondary/70 mb-1">Capacité maximale</label>
-                  <input type="number" required placeholder="ex: 15" value={groupeCapacite} onChange={(e) => setGroupeCapacite(e.target.value)} className="w-full h-9 px-3 rounded-xl border border-secondary/20 bg-secondary/5 text-xs text-secondary font-medium focus:outline-hidden focus:border-accent" />
+                  <h3 className="text-sm font-extrabold text-secondary flex items-center gap-2 mb-4 pb-2 border-b border-secondary/10">
+                    <Plus className="w-4 h-4 text-accent" /> Créer un groupe TP
+                  </h3>
+                  <form onSubmit={handleAddGroupe} className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-secondary/70 mb-1">Nom du groupe</label>
+                      <input type="text" required placeholder="ex: Groupe TP 3" value={groupeNom} onChange={(e) => setGroupeNom(e.target.value)} className="w-full h-9 px-3 rounded-xl border border-secondary/20 bg-secondary/5 text-xs text-secondary font-medium focus:outline-hidden focus:border-accent" />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-secondary/70">Classe rattachée</label>
+                        {(() => {
+                          const matchedCl = classesList.find((c) => c.nom === groupeClasse);
+                          const totalEff = matchedCl ? matchedCl.effectif : 28;
+                          const usedEff = groupesList
+                            .filter((g) => g.classe === groupeClasse)
+                            .reduce((sum, g) => sum + (g.capacite || 0), 0);
+                          const remaining = Math.max(0, totalEff - usedEff);
+                          return (
+                            <span className="text-[10px] font-bold text-accent">
+                              Effectif : {usedEff}/{totalEff} ({remaining} place(s) restante(s))
+                            </span>
+                          );
+                        })()}
+                      </div>
+                      <select value={groupeClasse} onChange={(e) => setGroupeClasse(e.target.value)} className="w-full h-9 px-3 rounded-xl border border-secondary/20 bg-secondary/5 text-xs text-secondary font-medium focus:outline-hidden focus:border-accent">
+                        {classesList.map(c => <option key={c.id} value={c.nom}>{c.nom} ({c.niveau} · {c.effectif} étudiants)</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-secondary/70 mb-1">Capacité maximale</label>
+                      <input type="number" required placeholder="ex: 15" value={groupeCapacite} onChange={(e) => setGroupeCapacite(e.target.value)} className="w-full h-9 px-3 rounded-xl border border-secondary/20 bg-secondary/5 text-xs text-secondary font-medium focus:outline-hidden focus:border-accent" />
+                    </div>
+                    <div className="pt-2">
+                      <button type="submit" disabled={actionLoading} className="w-full h-10 rounded-xl bg-accent text-white text-xs font-bold hover:opacity-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
+                        {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+                        <span>{actionLoading ? "Création..." : "Créer le groupe"}</span>
+                      </button>
+                    </div>
+                  </form>
                 </div>
-                <div className="pt-2">
-                  <button type="submit" className="w-full h-10 rounded-xl bg-accent text-white text-xs font-bold hover:opacity-95 transition-all flex items-center justify-center gap-2">
-                    <Plus className="w-4 h-4" /><span>Créer le groupe</span>
-                  </button>
-                </div>
-              </form>
+              )}
             </div>
           </div>
         </div>

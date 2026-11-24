@@ -454,6 +454,20 @@ export const SupabaseService = {
     return data[0];
   },
 
+  async updateGroupeTP(id: number, updates: { nom?: string; capacite?: number; classe_nom?: string; classe_id?: number }) {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("groupes_tp")
+      .update(updates)
+      .eq("id", id)
+      .select();
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error("Impossible de modifier le groupe TP.");
+    }
+    return data[0];
+  },
+
   async deleteGroupeTP(id: number) {
     const supabase = createClient();
     const { error } = await supabase.from("groupes_tp").delete().eq("id", id);
