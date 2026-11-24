@@ -1248,12 +1248,12 @@ export default function RoleDirecteurEtablissement({
               </button>
             </div>
 
-            {/* Form to edit Enseignant */}
-            {editingUser && editingUser.role === "Enseignant" && (
+            {/* Form to edit Enseignant or DirecteurDepartement */}
+            {editingUser && (editingUser.role === "Enseignant" || editingUser.role === "DirecteurDepartement") && (
               <form onSubmit={handleSaveEditUser} className="mb-6 p-4 rounded-2xl border border-indigo-500/25 bg-indigo-500/5 space-y-3">
                 <div className="flex items-center justify-between pb-2 border-b border-indigo-500/15">
                   <h4 className="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
-                    <Edit className="w-3.5 h-3.5" /> Modifier l'enseignant #{String(editingUser.id).slice(0, 8)}
+                    <Edit className="w-3.5 h-3.5" /> Modifier {editingUser.role === "DirecteurDepartement" ? "l'enseignant (Directeur de Dép.)" : "l'enseignant"} #{String(editingUser.id).slice(0, 8)}
                   </h4>
                   <button type="button" onClick={() => setEditingUser(null)} className="text-secondary/50 hover:text-secondary p-1">
                     <X className="w-4 h-4" />
@@ -1361,7 +1361,7 @@ export default function RoleDirecteurEtablissement({
 
             {loadingData ? (
               <TableLoadingSkeleton rows={4} cols={7} />
-            ) : usersList.filter((u) => u.role === "Enseignant").length === 0 ? (
+            ) : usersList.filter((u) => u.role === "Enseignant" || u.role === "DirecteurDepartement").length === 0 ? (
               <div className="py-8 text-center text-secondary/50 text-xs">Aucun enseignant trouvé.</div>
             ) : (
               <div className="overflow-x-auto">
@@ -1379,11 +1379,20 @@ export default function RoleDirecteurEtablissement({
                   </thead>
                   <tbody className="divide-y divide-secondary/10">
                     {usersList
-                      .filter((u) => u.role === "Enseignant")
+                      .filter((u) => u.role === "Enseignant" || u.role === "DirecteurDepartement")
                       .map((u) => (
                         <tr key={u.id} className="hover:bg-secondary/5 transition-colors">
                           <td className="py-3.5 px-3 font-semibold text-secondary/60">#{String(u.id).slice(0, 8)}</td>
-                          <td className="py-3.5 px-3 text-secondary font-medium">{u.nom}</td>
+                          <td className="py-3.5 px-3 text-secondary font-medium">
+                            <div className="flex items-center gap-1.5">
+                              <span>{u.nom}</span>
+                              {u.role === "DirecteurDepartement" && (
+                                <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-purple-500/10 text-purple-600 border border-purple-500/20">
+                                  Dir. Dép
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className="py-3.5 px-3 text-secondary">{u.prenom}</td>
                           <td className="py-3.5 px-3 text-secondary font-mono text-xs">{u.email}</td>
                           <td className="py-3.5 px-3 text-secondary">{u.grade || "Enseignant"}</td>
@@ -1405,7 +1414,7 @@ export default function RoleDirecteurEtablissement({
                               <button
                                 type="button"
                                 disabled={deletingId === u.id}
-                                onClick={() => handleDeleteUser(u.id, "Enseignant")}
+                                onClick={() => handleDeleteUser(u.id, u.role === "DirecteurDepartement" ? "Directeur de Département" : "Enseignant")}
                                 title="Supprimer"
                                 className="p-1.5 rounded-lg text-secondary/60 hover:text-rose-500 hover:bg-rose-500/10 transition-colors disabled:opacity-40"
                               >
@@ -2435,7 +2444,7 @@ export default function RoleDirecteurEtablissement({
             </div>
             <div className="rounded-2xl border border-secondary/15 bg-secondary/5 p-5">
               <span className="text-[11px] font-bold text-secondary/50 uppercase tracking-wider block">Enseignants</span>
-              <span className="text-2xl font-extrabold text-secondary mt-1 block">{usersList.filter(u => u.role === "Enseignant").length}</span>
+              <span className="text-2xl font-extrabold text-secondary mt-1 block">{usersList.filter(u => u.role === "Enseignant" || u.role === "DirecteurDepartement").length}</span>
             </div>
             <div className="rounded-2xl border border-secondary/15 bg-secondary/5 p-5">
               <span className="text-[11px] font-bold text-secondary/50 uppercase tracking-wider block">Étudiants</span>

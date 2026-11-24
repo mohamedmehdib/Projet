@@ -135,7 +135,7 @@ export default function TimetableManager({
       }));
 
       const teachers = (profiles || [])
-        .filter((p: any) => p.role === "Enseignant")
+        .filter((p: any) => p.role === "Enseignant" || p.role === "DirecteurDepartement")
         .map((t: any) => ({
           id: t.id,
           nom: t.nom,
