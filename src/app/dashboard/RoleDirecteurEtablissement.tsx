@@ -2371,16 +2371,14 @@ export default function RoleDirecteurEtablissement({
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="border-b border-secondary/10 text-[10px] font-extrabold text-secondary/50 uppercase tracking-wider">
-                      <th className="py-3 px-3">Année Univ.</th><th className="py-3 px-3">Date Début</th><th className="py-3 px-3">Date Fin</th><th className="py-3 px-3 text-center">Inscrits</th><th className="py-3 px-3 text-center">Statut</th>
+                      <th className="py-3 px-3">Année Univ.</th>
+                      <th className="py-3 px-3 text-center">Statut</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-secondary/10">
                     {inscriptionsList.map((insc) => (
                       <tr key={insc.id} className="hover:bg-secondary/5 transition-colors">
                         <td className="py-3.5 px-3 font-semibold text-secondary">{insc.annee}</td>
-                        <td className="py-3.5 px-3 text-secondary font-mono">{insc.dateDebut}</td>
-                        <td className="py-3.5 px-3 text-secondary font-mono">{insc.dateFin}</td>
-                        <td className="py-3.5 px-3 text-center text-secondary font-bold">{insc.inscrits}</td>
                         <td className="py-3.5 px-3 text-center">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${insc.statut === "Ouverte" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-secondary/10 text-secondary border-secondary/20"}`}>{insc.statut}</span>
                         </td>
@@ -2410,14 +2408,6 @@ export default function RoleDirecteurEtablissement({
                     <option value="2028 - 2029">2028 - 2029</option>
                     <option value="2029 - 2030">2029 - 2030</option>
                   </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-secondary/70 mb-1">Date Début</label>
-                  <input type="date" required value={dateDebutInsc} onChange={(e) => setDateDebutInsc(e.target.value)} className="w-full h-9 px-3 rounded-xl border border-secondary/20 bg-secondary/5 text-xs text-secondary font-medium focus:outline-hidden focus:border-accent" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-secondary/70 mb-1">Date Fin</label>
-                  <input type="date" required value={dateFinInsc} onChange={(e) => setDateFinInsc(e.target.value)} className="w-full h-9 px-3 rounded-xl border border-secondary/20 bg-secondary/5 text-xs text-secondary font-medium focus:outline-hidden focus:border-accent" />
                 </div>
                 <div className="pt-2">
                   <button type="submit" className="w-full h-10 rounded-xl bg-accent text-white text-xs font-bold hover:opacity-95 transition-all flex items-center justify-center gap-2">

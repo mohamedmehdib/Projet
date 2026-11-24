@@ -154,9 +154,6 @@ export default function RoleSuperAdmin({
                   <thead>
                     <tr className="border-b border-secondary/10 text-[10px] font-extrabold text-secondary/50 uppercase tracking-wider">
                       <th className="py-3 px-3">Année Univ.</th>
-                      <th className="py-3 px-3">Date Début</th>
-                      <th className="py-3 px-3">Date Fin</th>
-                      <th className="py-3 px-3 text-center">Inscrits</th>
                       <th className="py-3 px-3 text-center">Statut</th>
                       <th className="py-3 px-3 text-center">Action</th>
                     </tr>
@@ -165,9 +162,6 @@ export default function RoleSuperAdmin({
                     {inscriptions.map((i) => (
                       <tr key={i.id} className="hover:bg-secondary/5 transition-colors">
                         <td className="py-3.5 px-3 font-semibold text-secondary">{i.anneeUniversitaire}</td>
-                        <td className="py-3.5 px-3 text-secondary font-mono">{i.dateDebut}</td>
-                        <td className="py-3.5 px-3 text-secondary font-mono">{i.dateFin}</td>
-                        <td className="py-3.5 px-3 text-center font-bold text-secondary">{i.inscrits}</td>
                         <td className="py-3.5 px-3 text-center">
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${
                             i.statut === "Ouverte"
@@ -213,26 +207,6 @@ export default function RoleSuperAdmin({
                     <option value="2028 - 2029">2028 - 2029</option>
                     <option value="2029 - 2030">2029 - 2030</option>
                   </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-secondary/70 mb-1">Date Début</label>
-                  <input
-                    type="date"
-                    required
-                    value={dateDebut}
-                    onChange={(e) => setDateDebut(e.target.value)}
-                    className="w-full h-9 px-3 rounded-xl border border-secondary/20 bg-secondary/5 text-xs text-secondary font-medium focus:outline-hidden focus:border-accent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-secondary/70 mb-1">Date Fin</label>
-                  <input
-                    type="date"
-                    required
-                    value={dateFin}
-                    onChange={(e) => setDateFin(e.target.value)}
-                    className="w-full h-9 px-3 rounded-xl border border-secondary/20 bg-secondary/5 text-xs text-secondary font-medium focus:outline-hidden focus:border-accent"
-                  />
                 </div>
                 <div className="pt-2">
                   <button
