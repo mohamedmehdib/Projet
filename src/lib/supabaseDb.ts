@@ -437,15 +437,21 @@ export const SupabaseService = {
   async getGroupesTP() {
     const supabase = createClient();
     const { data, error } = await supabase.from("groupes_tp").select("*").order("nom");
-    if (error) throw error;
-    return data;
+    if (error) {
+      console.warn("Notice: Table 'groupes_tp' introuvable ou inaccessible dans Supabase:", error.message);
+      return [];
+    }
+    return data || [];
   },
 
   async createGroupeTP(item: { nom: string; capacite: number; classe_nom?: string; classe_id?: number }) {
     const supabase = createClient();
-    const { data, error } = await supabase.from("groupes_tp").insert([item]).select().single();
+    const { data, error } = await supabase.from("groupes_tp").insert([item]).select();
     if (error) throw error;
-    return data;
+    if (!data || data.length === 0) {
+      throw new Error("Impossible de créer le groupe TP dans Supabase.");
+    }
+    return data[0];
   },
 
   async deleteGroupeTP(id: number) {
