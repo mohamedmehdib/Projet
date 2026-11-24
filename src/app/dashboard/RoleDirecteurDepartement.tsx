@@ -14,7 +14,7 @@ import { TimetableLoadingSkeleton, TableLoadingSkeleton } from "@/components/Loa
 import TimetableManager from "@/components/TimetableManager";
 import { useEffect } from "react";
 
-export type DirecteurDepartementTab = "emplois" | "inscrits" | "offres" | "profile";
+export type DirecteurDepartementTab = "emplois" | "profile";
 
 const CURRENT_EMPLOI: EmploiDuTemps = {
   id: 1,
@@ -143,14 +143,10 @@ export default function RoleDirecteurDepartement({
       <div className="pb-2">
         <h1 className="text-2xl sm:text-3xl font-extrabold text-secondary tracking-tight">
           {activeTab === "emplois" && "Gérer les emplois"}
-          {activeTab === "inscrits" && "Gérer inscrits"}
-          {activeTab === "offres" && "Créer les offres"}
           {activeTab === "profile" && "Mon profil"}
         </h1>
         <p className="text-xs sm:text-sm text-secondary/65 font-medium mt-1">
           {activeTab === "emplois" && "Supervisez la création et l'affectation des emplois du temps par classe."}
-          {activeTab === "inscrits" && "Gérez les inscriptions et réinscriptions des étudiants."}
-          {activeTab === "offres" && "Créez et gérez les offres de formation par département."}
           {activeTab === "profile" && "Consultez et modifiez votre compte directeur de département."}
         </p>
       </div>
@@ -165,86 +161,6 @@ export default function RoleDirecteurDepartement({
       {/* ================= TAB: EMPLOI DU TEMPS ================= */}
       {activeTab === "emplois" && (
         <TimetableManager />
-      )}
-
-      {/* ================= TAB: GÉRER INSCRITS ================= */}
-      {activeTab === "inscrits" && (
-        <div className="rounded-2xl border border-secondary/15 bg-primary/90 p-5 sm:p-7 shadow-2xl backdrop-blur-xl overflow-hidden">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-sm font-extrabold text-secondary">Étudiants inscrits</h3>
-              <p className="text-[11px] text-secondary/50 font-medium">Gestion des inscriptions du département</p>
-            </div>
-            <button type="button" className="px-4 h-10 rounded-xl bg-accent text-white text-xs font-semibold hover:opacity-95 transition-all cursor-pointer flex items-center gap-2">
-              <Plus className="w-4 h-4" /><span>Nouvel inscrit</span>
-            </button>
-          </div>
-          {loadingData ? (
-            <TableLoadingSkeleton rows={4} cols={8} />
-          ) : inscritsList.length === 0 ? (
-            <div className="py-8 text-center text-secondary/50 text-xs">Aucun étudiant inscrit trouvé.</div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead>
-                  <tr className="border-b border-secondary/10 text-[10px] font-extrabold text-secondary/50 uppercase tracking-wider">
-                    <th className="py-3 px-3">id</th><th className="py-3 px-3">Nom</th><th className="py-3 px-3">Prénom</th><th className="py-3 px-3">Matricule</th><th className="py-3 px-3">Classe</th><th className="py-3 px-3">Niveau</th><th className="py-3 px-3 text-center">Statut</th><th className="py-3 px-3 text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-secondary/10">
-                  {inscritsList.map((i) => (
-                    <tr key={i.id} className="hover:bg-secondary/5 transition-colors">
-                      <td className="py-3.5 px-3 font-semibold text-secondary/60">#{i.id}</td>
-                      <td className="py-3.5 px-3 text-secondary font-medium">{i.nom}</td>
-                      <td className="py-3.5 px-3 text-secondary">{i.prenom}</td>
-                      <td className="py-3.5 px-3 text-secondary font-mono text-xs">{i.matricule}</td>
-                      <td className="py-3.5 px-3 text-secondary">{i.classe}</td>
-                      <td className="py-3.5 px-3 text-secondary">{i.niveau}</td>
-                      <td className="py-3.5 px-3 text-center"><span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${i.statut === "Inscrit" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"}`}>{i.statut}</span></td>
-                      <td className="py-3.5 px-3 text-center"><button type="button" className="p-1.5 rounded-lg text-secondary/60 hover:text-rose-500 hover:bg-rose-500/5 transition-colors" title="Supprimer"><Trash2 className="w-3 h-3" /></button></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ================= TAB: CRÉER LES OFFRES ================= */}
-      {activeTab === "offres" && (
-        <div className="rounded-2xl border border-secondary/15 bg-primary/90 p-5 sm:p-7 shadow-2xl backdrop-blur-xl overflow-hidden">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-sm font-extrabold text-secondary">Offres de formation</h3>
-              <p className="text-[11px] text-secondary/50 font-medium">Créez et gérez les offres du département</p>
-            </div>
-            <button type="button" className="px-4 h-10 rounded-xl bg-accent text-white text-xs font-semibold hover:opacity-95 transition-all cursor-pointer flex items-center gap-2">
-              <Plus className="w-4 h-4" /><span>Nouvelle offre</span>
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-secondary/10 text-[10px] font-extrabold text-secondary/50 uppercase tracking-wider">
-                  <th className="py-3 px-3">id</th><th className="py-3 px-3">Intitulé</th><th className="py-3 px-3">Niveau</th><th className="py-3 px-3">Département</th><th className="py-3 px-3">Description</th><th className="py-3 px-3 text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-secondary/10">
-                {offresList.map((o) => (
-                  <tr key={o.id} className="hover:bg-secondary/5 transition-colors">
-                    <td className="py-3.5 px-3 font-semibold text-secondary/60">#{o.id}</td>
-                    <td className="py-3.5 px-3 text-secondary font-medium">{o.intitule}</td>
-                    <td className="py-3.5 px-3 text-secondary">{o.niveau}</td>
-                    <td className="py-3.5 px-3 text-secondary">{o.departement}</td>
-                    <td className="py-3.5 px-3 text-secondary text-xs">{o.description}</td>
-                    <td className="py-3.5 px-3 text-center"><button type="button" className="p-1.5 rounded-lg text-secondary/60 hover:text-rose-500 hover:bg-rose-500/5 transition-colors" title="Supprimer"><Trash2 className="w-3 h-3" /></button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
       )}
 
       {/* ================= TAB: MON PROFIL ================= */}

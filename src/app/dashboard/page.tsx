@@ -89,6 +89,7 @@ function DashboardContent() {
   const { isDarkMode, toggleTheme } = useThemeToggle();
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeTab, setActiveTabState] = useState<string>("timetable");
+  const [activeRoleMode, setActiveRoleMode] = useState<"DirecteurDepartement" | "Enseignant">("DirecteurDepartement");
   const [mounted, setMounted] = useState(false);
 
   // Sync activeTab with URL ?tab= parameter
@@ -97,6 +98,13 @@ function DashboardContent() {
     const params = new URLSearchParams(window.location.search);
     params.set("tab", tab);
     router.replace(`/dashboard?${params.toString()}`, { scroll: false });
+  };
+
+  // Toggle role mode for Directeur de Département
+  const handleSwitchRoleMode = (mode: "DirecteurDepartement" | "Enseignant") => {
+    setActiveRoleMode(mode);
+    const defaultTab = mode === "DirecteurDepartement" ? "emplois" : "absences";
+    handleSelectTab(defaultTab);
   };
 
   // Load authenticated user from localStorage; redirect if not authenticated
@@ -144,7 +152,7 @@ function DashboardContent() {
       <aside className="w-64 h-full bg-primary/80 backdrop-blur-xl border-r border-secondary/15 flex flex-col justify-between shrink-0 p-5 relative z-10">
         <div className="overflow-y-auto pr-1">
           {/* Logo Brand Header & Theme Toggle Button */}
-          <div className="flex items-center justify-between mb-8 px-1">
+          <div className="flex items-center justify-between mb-6 px-1">
             <Link href="/" className="flex items-center gap-2.5 group cursor-pointer">
               <div className="relative transition-transform duration-300 group-hover:scale-105 flex items-center">
                 <Image
@@ -182,6 +190,41 @@ function DashboardContent() {
             </button>
           </div>
 
+          {/* Switch Role Mode Pill for Directeur de Département */}
+          {currentUser.role === "DirecteurDepartement" && (
+            <div className="mb-6 p-1.5 rounded-2xl bg-secondary/5 border border-secondary/15">
+              <div className="text-[10px] font-extrabold text-secondary/50 uppercase tracking-wider px-2 py-1 mb-1">
+                Espace Actif
+              </div>
+              <div className="grid grid-cols-2 gap-1 bg-secondary/10 p-0.5 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => handleSwitchRoleMode("DirecteurDepartement")}
+                  className={`py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all text-center flex items-center justify-center gap-1 cursor-pointer ${
+                    activeRoleMode === "DirecteurDepartement"
+                      ? "bg-accent text-white shadow-xs"
+                      : "text-secondary/60 hover:text-secondary hover:bg-secondary/10"
+                  }`}
+                >
+                  <Building2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>Direction</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchRoleMode("Enseignant")}
+                  className={`py-1.5 px-2 rounded-lg text-[11px] font-bold transition-all text-center flex items-center justify-center gap-1 cursor-pointer ${
+                    activeRoleMode === "Enseignant"
+                      ? "bg-accent text-white shadow-xs"
+                      : "text-secondary/60 hover:text-secondary hover:bg-secondary/10"
+                  }`}
+                >
+                  <GraduationCap className="w-3.5 h-3.5 shrink-0" />
+                  <span>Enseignant</span>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Role-based Navigation */}
           <div className="space-y-6">
             <div>
@@ -215,8 +258,9 @@ function DashboardContent() {
                   </>
                 )}
 
-                {/* 2. ENSEIGNANT */}
-                {currentUser.role === "Enseignant" && (
+                {/* 2. ENSEIGNANT (ou Directeur de Département en mode Enseignant) */}
+                {(currentUser.role === "Enseignant" ||
+                  (currentUser.role === "DirecteurDepartement" && activeRoleMode === "Enseignant")) && (
                   <>
                     <button
                       type="button"
@@ -305,8 +349,8 @@ function DashboardContent() {
                   </>
                 )}
 
-                {/* 5. DIRECTEUR DE DÉPARTEMENT */}
-                {currentUser.role === "DirecteurDepartement" && (
+                {/* 5. DIRECTEUR DE DÉPARTEMENT (en mode Direction) */}
+                {currentUser.role === "DirecteurDepartement" && activeRoleMode === "DirecteurDepartement" && (
                   <>
                     <button
                       type="button"
@@ -319,30 +363,6 @@ function DashboardContent() {
                     >
                       <Calendar className="w-4 h-4 shrink-0" />
                       <span>Gérer les emplois</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSelectTab("inscrits")}
-                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer text-left ${
-                        activeTab === "inscrits"
-                          ? "bg-accent text-white shadow-md shadow-indigo-500/25"
-                          : "text-secondary/70 hover:text-secondary hover:bg-secondary/8"
-                      }`}
-                    >
-                      <GraduationCap className="w-4 h-4 shrink-0" />
-                      <span>Gérer inscrit</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSelectTab("offres")}
-                      className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 cursor-pointer text-left ${
-                        activeTab === "offres"
-                          ? "bg-accent text-white shadow-md shadow-indigo-500/25"
-                          : "text-secondary/70 hover:text-secondary hover:bg-secondary/8"
-                      }`}
-                    >
-                      <Building2 className="w-4 h-4 shrink-0" />
-                      <span>Créer les offres</span>
                     </button>
                   </>
                 )}
@@ -480,7 +500,11 @@ function DashboardContent() {
               {currentUser.prenom} {currentUser.nom}
             </p>
             <p className="text-[10px] font-medium text-accent truncate">
-              {currentUser.role}
+              {currentUser.role === "DirecteurDepartement"
+                ? activeRoleMode === "DirecteurDepartement"
+                  ? "Directeur de Département"
+                  : "Directeur Dép. (Mode Enseignant)"
+                : currentUser.role}
             </p>
           </div>
           <button
@@ -501,11 +525,14 @@ function DashboardContent() {
 
         {/* Dynamic Tab Body */}
         <div className="p-6 sm:p-8 max-w-7xl w-full mx-auto relative z-10">
-          {renderRolePage(currentUser.role, {
-            currentUser,
-            activeTab,
-            onUpdateUser: handleUpdateUser,
-          })}
+          {renderRolePage(
+            currentUser.role === "DirecteurDepartement" ? activeRoleMode : currentUser.role,
+            {
+              currentUser,
+              activeTab,
+              onUpdateUser: handleUpdateUser,
+            }
+          )}
         </div>
       </div>
     </div>
