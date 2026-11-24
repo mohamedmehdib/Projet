@@ -129,10 +129,13 @@ export const SupabaseService = {
       .from("profiles")
       .update(updates)
       .eq("id", id)
-      .select()
-      .single();
+      .select();
+
     if (error) throw error;
-    return data;
+    if (!data || data.length === 0) {
+      throw new Error("Mise à jour impossible : permissions insuffisantes (RLS) ou profil introuvable.");
+    }
+    return data[0];
   },
 
   // ===================== DÉPARTEMENTS =====================
